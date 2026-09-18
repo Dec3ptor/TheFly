@@ -3,7 +3,12 @@ name = "flysim"
 version = "0.1.0"
 description = "The MaleCNS connectome, spiking, in a body, in a world"
 requires-python = ">=3.10"
-dependencies = ["numpy>=1.24", "pyarrow>=14"]
+dependencies = ["numpy>=1.24"]
+
+# Only needed to rebuild the dataset from Janelia's LZ4-compressed Arrow files.
+# The packaged dataset needs nothing beyond numpy.
+[project.optional-dependencies]
+rebuild = ["pyarrow>=14"]
 
 [project.scripts]
 flysim = "flysim.cli:main"
@@ -16,4 +21,4 @@ build-backend = "setuptools.build_meta"
 packages = ["flysim"]
 
 [tool.setuptools.package-data]
-flysim = ["ui/*"]
+flysim = ["ui/*", "data/*.npz"]

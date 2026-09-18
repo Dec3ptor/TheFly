@@ -1,4 +1,4 @@
-"""Command line: `flysim setup` to fetch and build, `flysim run` to fly."""
+"""Command line: `flysim run` to fly. The connectome ships with the package."""
 import argparse
 import os
 import sys
@@ -46,6 +46,7 @@ def download(path, destination):
 
 
 def setup(args):
+    """Rebuild the dataset from Janelia's originals. Not needed for normal use."""
     DATA_HOME.mkdir(parents=True, exist_ok=True)
     if DATA_FILE.exists() and not args.force:
         print(f"{DATA_FILE} already built ({DATA_FILE.stat().st_size/1e6:.0f} MB)")
@@ -75,23 +76,19 @@ def setup(args):
 
 
 def run(args):
-    if not DATA_FILE.exists():
-        print(f"No data at {DATA_FILE}. Run `flysim setup` first.")
-        return 1
+    from .dataset import default_path
     from .server import serve
-    serve(DATA_FILE, host=args.host, port=args.port, open_browser=not args.no_browser)
+    serve(default_path(), host=args.host, port=args.port,
+          open_browser=not args.no_browser)
     return 0
 
 
 def probe(args):
     """Run headless and report what the brain does — no browser involved."""
-    import numpy as np
     from .agent import Agent
+    from .dataset import default_path, load
     from .world import World
-    if not DATA_FILE.exists():
-        print(f"No data at {DATA_FILE}. Run `flysim setup` first.")
-        return 1
-    data = np.load(DATA_FILE, allow_pickle=True)
+    data = load(default_path())
     world = World(extent=150.0, seed=3)
     world.scatter()
     agent = Agent(data, world)
@@ -107,7 +104,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog='flysim', description=__doc__)
     sub = parser.add_subparsers(dest='command', required=True)
 
-    p = sub.add_parser('setup', help='download the connectome and build the data file')
+    p = sub.add_parser('setup',
+                       help='rebuild the dataset from Janelia (not needed normally)')
     p.add_argument('--force', action='store_true', help='rebuild even if it exists')
     p.add_argument('--keep-cache', action='store_true', help='keep the downloaded sources')
     p.set_defaults(func=setup)

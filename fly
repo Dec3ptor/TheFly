@@ -55,29 +55,22 @@ py="$venv/bin/python"
 
 # ---------------------------------------------------------------- dependencies
 
-if ! "$py" -c "import flysim, numpy, pyarrow" >/dev/null 2>&1; then
-  say "Installing dependencies (numpy, pyarrow) — a minute or so, once"
+if ! "$py" -c "import flysim, numpy" >/dev/null 2>&1; then
+  say "Installing dependencies (numpy) — a moment, once"
   "$py" -m pip install --upgrade pip --quiet
   "$py" -m pip install -e "$here" --quiet || die \
-"Install failed. If pip could not find a wheel for numpy or pyarrow, your Python
-is probably very new; try Python 3.12."
+"Install failed. numpy ships wheels for every supported Python; if pip tried to
+build it from source your Python is probably a very new release — try 3.12."
 fi
 
 # ---------------------------------------------------------------- data
 
-data_home="${FLYSIM_HOME:-$HOME/.flysim}"
-data_file="$data_home/flysim_data.npz"
-
+# The connectome ships inside the package, so there is nothing to download.
 if [ "${1:-}" = "rebuild" ]; then
-  say "Rebuilding the connectome data file"
+  say "Rebuilding the dataset from Janelia's originals (~545 MB download)"
+  "$py" -m pip install "$here[rebuild]" --quiet
   "$py" -m flysim.cli setup --force
   shift
-elif [ ! -f "$data_file" ]; then
-  warn "First run: downloading the MaleCNS connectome."
-  warn "  ~545 MB of public CC-BY data, once. The built file is ~160 MB."
-  warn "  This takes a few minutes on a decent connection."
-  echo
-  "$py" -m flysim.cli setup
 fi
 
 # ---------------------------------------------------------------- go

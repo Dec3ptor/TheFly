@@ -16,27 +16,35 @@ One command, from the repository root:
 ./fly
 ```
 
-That is the whole thing. It makes a virtual environment in `.venv`, installs numpy and
-pyarrow into it, downloads the connectome on first run, builds the data file, and opens
-the UI. Later runs skip straight to launching. On macOS you can also just **double-click
-`Fly.command`** in Finder.
+That is the whole thing — about **ten seconds from a fresh clone to a running fly**. It
+makes a virtual environment in `.venv`, installs numpy into it, and opens the UI. On
+macOS you can instead just **double-click `Fly.command`** in Finder.
 
-The virtual environment matters: on macOS a plain `pip install` into the Homebrew or
+**Nothing is downloaded.** The built connectome ships inside the package at
+`flysim/data/connectome.npz` (64 MB), so there is no setup step and **numpy is the only
+dependency**. That is deliberate: the source files are LZ4-compressed Arrow, reading
+them needs pyarrow, and pyarrow has no wheel for every Mac — on an Intel machine with an
+older macOS, pip falls back to building it from source and then demands a Rust
+toolchain. Shipping the built data removes that whole class of failure.
+
+The virtual environment matters too: on macOS a plain `pip install` into the Homebrew or
 system Python is refused outright with `externally-managed-environment` (PEP 668), so
 `./fly` keeps everything local and never touches your system Python.
 
 | | |
 | --- | --- |
-| `./fly` | set up if needed, then run |
+| `./fly` | run it |
 | `./fly probe --ticks 200` | run headless and print telemetry, no browser |
-| `./fly rebuild` | force a rebuild of the data file |
+| `./fly rebuild` | rebuild the dataset from Janelia's originals (see below) |
 
-First run downloads ~545 MB of public CC-BY data and builds a ~160 MB file into
-`~/.flysim` (override with `FLYSIM_HOME`). It needs Python 3.10+; if you don't have one
-`./fly` says so and tells you how to get it.
+Needs Python 3.10+; if you don't have one, `./fly` says so and tells you how to get it.
 
-If you'd rather drive it yourself, `pip install -e .` gives you a `flysim` command with
-the same `setup` / `run` / `probe` subcommands.
+### Rebuilding the dataset
+
+Only if you want to change how the data is built. `./fly rebuild` installs pyarrow,
+downloads ~545 MB of public CC-BY source data, and writes a fresh dataset to
+`~/.flysim/flysim_data.npz`, which then takes precedence over the packaged one.
+`FLYSIM_DATA=/path/to.npz` points at a specific file instead.
 
 ## The three layers
 
@@ -128,8 +136,10 @@ loop with a body, with plasticity in the right place.
 | `world.py` | Arena, body, posts, odour plumes |
 | `agent.py` | Sense → act → learn |
 | `server.py`, `ui/` | Local web UI |
-| `build.py` | Fetches the public data and builds the .npz |
-| `cli.py` | `setup`, `run`, `probe` |
+| `dataset.py` | Storage format and where the connectome is found |
+| `data/connectome.npz` | The built connectome, 64 MB, shipped so there is no setup |
+| `build.py` | Rebuilds that file from Janelia's originals (needs pyarrow) |
+| `cli.py` | `run`, `probe`, `setup` |
 
 Data © Janelia Research Campus, CC-BY, from [MaleCNS v1.0](https://male-cns.janelia.org/).
 Independent project, not affiliated with Janelia.

@@ -94,8 +94,9 @@ One command from the repository root — or double-click `Fly.command` on macOS:
 ./fly
 ```
 
-It builds its own virtual environment, installs numpy and pyarrow, downloads the
-connectome on first run, and opens the UI. Later runs launch straight away.
+About ten seconds from a fresh clone to a running fly. It builds its own virtual
+environment, installs numpy, and opens the UI. Nothing is downloaded — the built
+connectome ships in the repository, and numpy is the only dependency.
 
 See [`flysim/README.md`](flysim/README.md), which includes a frank account of where the
 model is weak.

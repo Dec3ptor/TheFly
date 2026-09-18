@@ -13,6 +13,7 @@ from pathlib import Path
 import numpy as np
 
 from .agent import Agent
+from .dataset import load as load_dataset
 from .world import Odour, Post, World
 
 UI_DIR = Path(__file__).parent / 'ui'
@@ -22,7 +23,7 @@ class Simulation:
     """Owns the agent and steps it on its own thread."""
 
     def __init__(self, data_path):
-        self.data = np.load(data_path, allow_pickle=True)
+        self.data = load_dataset(data_path)
         self.world = World(extent=150.0, seed=3)
         self.world.scatter(posts=3, odours=2)
         self.agent = Agent(self.data, self.world)

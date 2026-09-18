@@ -24,7 +24,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The site is already static: no build step, the repo root is what ships.
+      # Stage just the website. The repository also carries the native simulator
+      # and its 64 MB connectome, which have no business on a static site.
+      - name: Stage the site
+        run: |
+          mkdir -p _site
+          cp -r index.html assets data .nojekyll _site/
+
       # enablement turns Pages on via the API the first time this runs, so the
       # repository does not have to be configured by hand beforehand.
       - uses: actions/configure-pages@v5
@@ -32,6 +38,6 @@ jobs:
           enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
       - id: deployment
         uses: actions/deploy-pages@v4

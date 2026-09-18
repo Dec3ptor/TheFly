@@ -33,7 +33,13 @@ import urllib.parse
 import urllib.request
 
 import numpy as np
-import pyarrow.feather as feather
+
+from .dataset import save as save_dataset
+
+try:
+    import pyarrow.feather as feather
+except ImportError:  # pragma: no cover - only needed to rebuild
+    feather = None
 
 EXCITATORY = {'acetylcholine'}
 INHIBITORY = {'gaba', 'glutamate', 'histamine'}
@@ -144,6 +150,13 @@ def main():
     parser.add_argument('out', help='destination .npz')
     args = parser.parse_args()
 
+    if feather is None:
+        raise SystemExit(
+            "Rebuilding needs pyarrow to read the LZ4-compressed Arrow sources:\n"
+            "    .venv/bin/pip install pyarrow\n"
+            "The packaged dataset needs none of this — you only need pyarrow if you\n"
+            "are rebuilding from Janelia's originals.")
+
     body_id, type_id, type_names, side = neuron_table()
     count = body_id.shape[0]
     print(f"{count:,} neurons / {len(type_names):,} cell types")
@@ -179,16 +192,16 @@ def main():
     indptr = np.zeros(count + 1, dtype=np.int64)
     indptr[1:] = np.cumsum(np.bincount(source, minlength=count))
 
-    np.savez(args.out,
-             indptr=indptr,
-             indices=target.astype(np.int32),
-             syn=np.clip(synapses, 0, 65535).astype(np.uint16),
-             sign=sign,
-             body_id=body_id,
-             type_id=type_id,
-             type_names=np.array(type_names),
-             side=side,
-             soma=soma)
+    save_dataset(args.out,
+                 indptr=indptr,
+                 indices=target.astype(np.int32),
+                 syn=np.clip(synapses, 0, 65535).astype(np.uint16),
+                 sign=sign,
+                 body_id=body_id,
+                 type_id=type_id,
+                 type_names=np.array(type_names),
+                 side=side,
+                 soma=soma)
 
     degree = np.diff(indptr)
     print(f"  out-degree: mean {degree.mean():.1f}, max {degree.max():,}")
