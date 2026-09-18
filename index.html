@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>MaleCNS Browser — the fly connectome in your browser</title>
-<meta name="description" content="A static, backend-free 3D browser for the Janelia FlyEM male Drosophila CNS connectome, streaming neuron skeletons straight from the public data bucket.">
+<title>MaleCNS Browser — the fly connectome, running</title>
+<meta name="description" content="A static, backend-free 3D browser for the Janelia FlyEM male Drosophila CNS connectome, with a signed rate model you can stimulate and watch propagate.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🪰</text></svg>">
 <link rel="stylesheet" href="assets/style.css">
 </head>
@@ -15,10 +15,20 @@
     <header>
       <h1>MaleCNS Browser</h1>
       <p class="sub">
-        Janelia FlyEM's male <i>Drosophila</i> CNS connectome, rendered in the browser.
-        No server — skeletons stream straight from the public bucket.
+        Janelia FlyEM's male <i>Drosophila</i> CNS connectome, rendered and simulated in
+        the browser. No server — skeletons stream from the public bucket.
       </p>
     </header>
+
+    <section class="panel">
+      <h2>Try it</h2>
+      <div class="examples demos">
+        <button data-demo="LC4" title="Looming detectors drive the giant-fiber escape circuit">⚡ Escape (LC4)</button>
+        <button data-demo="ORN_D" title="Olfactory receptor neurons drive projection neurons and the lateral horn">⚡ Smell (ORN_D)</button>
+        <button data-demo="LPLC2" title="A second looming-sensitive population">⚡ Looming (LPLC2)</button>
+      </div>
+      <p class="hint-text">Loads the cell type, then stimulates it and starts the model.</p>
+    </section>
 
     <section class="panel">
       <label class="field">
@@ -31,10 +41,45 @@
         <button data-example="EPG" title="Central-complex compass neurons">EPG</button>
         <button data-example="LC4" title="Lobula columnar — looming detection">LC4</button>
         <button data-example="MDN" title="Moonwalker — backward walking">MDN</button>
-        <button data-example="LPLC2" title="Looming-sensitive visual projection">LPLC2</button>
         <button data-example="KCg-m" title="Mushroom body Kenyon cells">KCg-m</button>
       </div>
+      <label class="field inline">
+        <span class="label">Max neurons per type</span>
+        <select id="limit">
+          <option value="50">50</option>
+          <option value="150" selected>150</option>
+          <option value="500">500</option>
+          <option value="all">As many as possible</option>
+        </select>
+      </label>
       <ul id="results"></ul>
+      <p class="hint-text">Click a name to draw it · ⚡ to stimulate it</p>
+    </section>
+
+    <section class="panel" id="sim-panel">
+      <h2>Activity <span id="sim-active"></span></h2>
+
+      <div class="transport">
+        <button id="run">▶ Run</button>
+        <button id="reset-sim">Reset</button>
+        <span id="sim-time" class="mono"></span>
+      </div>
+
+      <label class="field slider">
+        <span class="label">Gain <b id="gain-value">2.00</b></span>
+        <input id="gain" type="range" min="0.5" max="3" step="0.05" value="2">
+      </label>
+      <p class="hint-text">Above ~2.2 the network runs away and everything saturates.</p>
+
+      <div class="stim-head">
+        <span class="label">Stimulating</span>
+        <button id="clear-stim" class="link">clear</button>
+      </div>
+      <div id="stim-list"><span class="empty">Nothing is being stimulated yet.</span></div>
+
+      <ul id="activity"></ul>
+      <button id="load-responders" class="wide">Draw top responders</button>
+      <p class="hint-text">Most active cell types · click one to add it to the view</p>
     </section>
 
     <section class="panel grow">
@@ -50,14 +95,18 @@
         <dt>Presynapses</dt><dd id="detail-pre"></dd>
         <dt>Postsynapses</dt><dd id="detail-post"></dd>
       </dl>
-      <a id="detail-neuprint" href="#" target="_blank" rel="noopener">Open in neuPrint ↗</a>
+      <div class="detail-actions">
+        <button id="detail-stim">⚡ Stimulate this type</button>
+        <a id="detail-neuprint" href="#" target="_blank" rel="noopener">neuPrint ↗</a>
+      </div>
     </section>
 
     <footer>
       <p>
         Data: <a href="https://male-cns.janelia.org/" target="_blank" rel="noopener">MaleCNS
         v1.0</a> from <a href="https://www.janelia.org/project-team/flyem" target="_blank"
-        rel="noopener">Janelia FlyEM</a>, CC-BY. This page is an independent viewer.
+        rel="noopener">Janelia FlyEM</a>, CC-BY. Independent viewer. The model is a coarse
+        rate approximation, not a biophysical simulation — see the README.
       </p>
     </footer>
   </aside>

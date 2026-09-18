@@ -3,6 +3,7 @@
 
 import * as THREE from './vendor/three.module.min.js';
 import { OrbitControls } from './vendor/OrbitControls.js';
+import { heatColor } from './sim.js';
 
 // Source data is in nanometres and the CNS is about a millimetre long. We render in
 // micrometres so camera distances, raycaster thresholds and depth precision all sit in
@@ -24,6 +25,7 @@ export class Viewer {
     this.shells = [];
     this.onSelect = null;
     this.colorCursor = 0;
+    this.activityMode = false;
 
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
     this.renderer.setClearColor(0x080b14, 1);
@@ -141,11 +143,33 @@ export class Viewer {
 
   /** Dim every neuron except one, or restore all of them when given null. */
   highlight(bodyId) {
+    this.selectedBody = bodyId;
+    if (this.activityMode) return;      // activity colouring owns the palette
     for (const [id, entry] of this.neurons) {
       const isTarget = bodyId === null || id === bodyId;
       entry.object.material.opacity = isTarget ? 0.95 : 0.12;
       entry.object.material.color.setHex(isTarget ? entry.color : 0x5a6478);
     }
+  }
+
+  /**
+   * Colour every neuron by the activity of the cell type it belongs to. Activity is
+   * per type, not per neuron, because that is the resolution the model runs at.
+   */
+  paintActivity(rate) {
+    this.activityMode = true;
+    for (const entry of this.neurons.values()) {
+      const activity = rate[entry.record.typeIndex] || 0;
+      entry.object.material.color.setHex(heatColor(activity));
+      // Idle neurons stay faintly visible so the anatomy does not disappear.
+      entry.object.material.opacity = 0.18 + 0.8 * activity;
+    }
+  }
+
+  /** Leave activity colouring and go back to one colour per neuron. */
+  clearActivity() {
+    this.activityMode = false;
+    this.highlight(this.selectedBody ?? null);
   }
 
   _onPointerDown(event) {
