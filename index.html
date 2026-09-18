@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MaleCNS Browser — the fly connectome in your browser</title>
+<meta name="description" content="A static, backend-free 3D browser for the Janelia FlyEM male Drosophila CNS connectome, streaming neuron skeletons straight from the public data bucket.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🪰</text></svg>">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<div id="app">
+  <aside id="sidebar">
+    <header>
+      <h1>MaleCNS Browser</h1>
+      <p class="sub">
+        Janelia FlyEM's male <i>Drosophila</i> CNS connectome, rendered in the browser.
+        No server — skeletons stream straight from the public bucket.
+      </p>
+    </header>
+
+    <section class="panel">
+      <label class="field">
+        <span class="label">Cell type</span>
+        <input id="search" type="search" placeholder="DNp01, LC4, KCg-m…"
+               autocomplete="off" spellcheck="false">
+      </label>
+      <div class="examples">
+        <button data-example="DNp01" title="Giant fiber — the escape-response neuron">DNp01</button>
+        <button data-example="EPG" title="Central-complex compass neurons">EPG</button>
+        <button data-example="LC4" title="Lobula columnar — looming detection">LC4</button>
+        <button data-example="MDN" title="Moonwalker — backward walking">MDN</button>
+        <button data-example="LPLC2" title="Looming-sensitive visual projection">LPLC2</button>
+        <button data-example="KCg-m" title="Mushroom body Kenyon cells">KCg-m</button>
+      </div>
+      <ul id="results"></ul>
+    </section>
+
+    <section class="panel grow">
+      <h2>Loaded <span id="neuron-count"></span></h2>
+      <ul id="neurons"></ul>
+    </section>
+
+    <section class="panel" id="detail" hidden>
+      <h2>Selected neuron</h2>
+      <dl>
+        <dt>Type</dt><dd id="detail-type"></dd>
+        <dt>Body ID</dt><dd id="detail-body" class="mono"></dd>
+        <dt>Presynapses</dt><dd id="detail-pre"></dd>
+        <dt>Postsynapses</dt><dd id="detail-post"></dd>
+      </dl>
+      <a id="detail-neuprint" href="#" target="_blank" rel="noopener">Open in neuPrint ↗</a>
+    </section>
+
+    <footer>
+      <p>
+        Data: <a href="https://male-cns.janelia.org/" target="_blank" rel="noopener">MaleCNS
+        v1.0</a> from <a href="https://www.janelia.org/project-team/flyem" target="_blank"
+        rel="noopener">Janelia FlyEM</a>, CC-BY. This page is an independent viewer.
+      </p>
+    </footer>
+  </aside>
+
+  <main id="stage">
+    <canvas id="viewport"></canvas>
+
+    <div id="toolbar">
+      <button id="reset-view">Reset view</button>
+      <button id="clear">Clear</button>
+      <label class="toggle">
+        <input id="toggle-shells" type="checkbox" checked>
+        <span>Neuropil shells</span>
+      </label>
+      <button id="open-ng" class="ghost">Open in Neuroglancer ↗</button>
+    </div>
+
+    <div id="status">Loading neuropil shells…</div>
+
+    <div id="hint">Drag to rotate · scroll to zoom · click a neuron to select it</div>
+  </main>
+</div>
+
+<script type="module" src="assets/app.js"></script>
+</body>
+</html>
