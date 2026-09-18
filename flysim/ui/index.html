@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>flysim — a connectome in a body</title>
+<style>
+:root {
+  --bg: #080b14; --panel: #0e1424; --panel-2: #141c30; --line: #1f2a44;
+  --text: #dde5f5; --muted: #8494b4; --accent: #4cc9f0; --accent-dim: #1d5d78;
+  --warm: #ffb703; --bad: #f72585; --good: #80ed99;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text);
+  font: 13px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+#app { display: grid; grid-template-columns: 320px 1fr; height: 100%; }
+#side { background: var(--panel); border-right: 1px solid var(--line);
+  overflow-y: auto; display: flex; flex-direction: column; }
+header { padding: 16px 16px 10px; }
+h1 { margin: 0; font-size: 16px; }
+.sub { margin: 5px 0 0; font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+.panel { padding: 12px 16px; border-top: 1px solid var(--line); }
+h2 { margin: 0 0 9px; font-size: 10.5px; font-weight: 600; letter-spacing: .9px;
+  text-transform: uppercase; color: var(--muted); }
+h2 span { float: right; font-weight: 400; text-transform: none; letter-spacing: 0; }
+button { padding: 6px 11px; border: 1px solid var(--line); border-radius: 7px;
+  background: var(--panel-2); color: var(--text); font: inherit; font-size: 12.5px;
+  cursor: pointer; }
+button:hover { border-color: var(--accent-dim); }
+button.on { background: var(--accent-dim); border-color: var(--accent); color: #fff; }
+.row { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.row + .row { margin-top: 8px; }
+label.sl { display: block; }
+label.sl span { display: block; font-size: 10.5px; letter-spacing: .9px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+label.sl b { color: var(--accent); }
+input[type=range] { width: 100%; accent-color: var(--accent); }
+input[type=text] { flex: 1; min-width: 0; padding: 6px 9px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--bg); color: var(--text); font: inherit; font-size: 12.5px; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: 3px 10px; margin: 0; font-size: 12.5px; }
+dt { color: var(--muted); }
+dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.bars { margin: 0; padding: 0; list-style: none; }
+.bars li { position: relative; padding: 4px 8px; border-radius: 5px; overflow: hidden;
+  display: flex; justify-content: space-between; font-size: 12px; }
+.bars li + li { margin-top: 2px; }
+.bars .fill { position: absolute; inset: 0 auto 0 0; background: var(--accent);
+  opacity: .22; border-radius: 5px; }
+.bars .n, .bars .v { position: relative; }
+.bars .v { color: var(--muted); font-variant-numeric: tabular-nums; }
+.hint { margin: 8px 0 0; font-size: 10.5px; color: #6b7a9c; line-height: 1.45; }
+#stage { position: relative; }
+canvas { display: block; width: 100%; height: 100%; }
+#hud { position: absolute; left: 14px; top: 14px; display: flex; gap: 7px; align-items: center; }
+#status { position: absolute; left: 14px; bottom: 14px; padding: 6px 11px;
+  border: 1px solid var(--line); border-radius: 7px; background: rgba(14,20,36,.86);
+  font-size: 12px; color: var(--muted); }
+.tools { position: absolute; right: 14px; top: 14px; display: flex; gap: 7px; }
+.tools button.on { background: var(--warm); border-color: var(--warm); color: #201500; }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <header>
+      <h1>flysim</h1>
+      <p class="sub">165,122 spiking neurons wired by the MaleCNS connectome,
+        driving a body around an arena.</p>
+    </header>
+
+    <section class="panel">
+      <h2>Transport <span id="rate"></span></h2>
+      <div class="row">
+        <button id="run">▶ Run</button>
+        <button id="reset">Reset</button>
+        <button id="scatter">New arena</button>
+      </div>
+      <div class="row"><label class="sl"><span>Speed <b id="speedv">1.0</b>×</span>
+        <input id="speed" type="range" min="0.1" max="4" step="0.1" value="1"></label></div>
+    </section>
+
+    <section class="panel">
+      <h2>Body</h2>
+      <dl>
+        <dt>Forward</dt><dd id="m-fwd">–</dd>
+        <dt>Turn</dt><dd id="m-turn">–</dd>
+        <dt>Position</dt><dd id="m-pos">–</dd>
+        <dt>Brain time</dt><dd id="m-time">–</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>Neurons <span id="t-spiking"></span></h2>
+      <dl>
+        <dt>Descending L / R</dt><dd id="t-dn">–</dd>
+        <dt>Motor neurons</dt><dd id="t-motor">–</dd>
+        <dt>Looming L / R</dt><dd id="t-loom">–</dd>
+        <dt>ORNs</dt><dd id="t-orn">–</dd>
+        <dt>Kenyon cells</dt><dd id="t-kc">–</dd>
+        <dt>MBONs</dt><dd id="t-mbon">–</dd>
+        <dt>Dopaminergic</dt><dd id="t-dan">–</dd>
+      </dl>
+    </section>
+
+    <section class="panel">
+      <h2>Learning</h2>
+      <dl>
+        <dt>KC→MBON depressed</dt><dd id="l-depr">–</dd>
+        <dt>Plastic synapses</dt><dd id="l-syn">–</dd>
+      </dl>
+      <div class="row" style="margin-top:9px"><button id="unlearn">Reset weights</button></div>
+      <p class="hint">Dopamine depresses the KC→MBON synapses of Kenyon cells active
+        while the fly sits on a valenced odour — the fly's own associative learning rule.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Most active types</h2>
+      <ul class="bars" id="types"></ul>
+    </section>
+
+    <section class="panel">
+      <h2>Stimulate</h2>
+      <div class="row">
+        <input id="stim" type="text" placeholder="LC4, DNp01, ORN_DA1…" spellcheck="false">
+        <button id="zap">⚡</button>
+      </div>
+      <p class="hint" id="stim-note">Injects standing drive into every neuron of that
+        cell type, on top of whatever the world is doing.</p>
+    </section>
+  </aside>
+
+  <main id="stage">
+    <canvas id="arena"></canvas>
+    <div id="hud"></div>
+    <div class="tools">
+      <button id="tool-post">+ Post</button>
+      <button id="tool-odour">+ Odour (reward)</button>
+      <button id="tool-bad">+ Odour (punish)</button>
+      <button id="clear">Clear</button>
+    </div>
+    <div id="status">starting…</div>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

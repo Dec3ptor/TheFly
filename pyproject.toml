@@ -1,0 +1,19 @@
+[project]
+name = "flysim"
+version = "0.1.0"
+description = "The MaleCNS connectome, spiking, in a body, in a world"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.24", "pyarrow>=14"]
+
+[project.scripts]
+flysim = "flysim.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["flysim"]
+
+[tool.setuptools.package-data]
+flysim = ["ui/*"]

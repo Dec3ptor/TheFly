@@ -81,6 +81,20 @@ This is a coarse rate model, not a biophysical simulation. Be clear-eyed about t
 It shows how activity spreads through real wiring. It does not tell you what the fly is
 thinking.
 
+## Running the fly natively
+
+The browser version is a rate model over cell types, because that is what fits in a tab.
+`flysim/` is the step past that: a native macOS/Linux app running **165,122 leaky
+integrate-and-fire neurons over all 25.5M measured synapses**, at 1-2x real time, driving
+a body around an arena — with mushroom-body plasticity so it can be conditioned.
+
+```sh
+pip install -e .   &&   flysim setup   &&   flysim run
+```
+
+See [`flysim/README.md`](flysim/README.md), which includes a frank account of where the
+model is weak.
+
 ## Running it
 
 Any static file server works, because that is all the site needs:
