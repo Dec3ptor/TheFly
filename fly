@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# One command: set up if needed, then fly.
+#
+#   ./fly           set up (first run only) and launch the simulator
+#   ./fly probe     run headless and print telemetry instead
+#   ./fly rebuild   force a rebuild of the connectome data file
+#
+# Everything lands in .venv/ next to this script and ~/.flysim for the data, so
+# nothing touches your system Python. That matters on macOS, where a plain
+# `pip install` into the Homebrew or system interpreter is refused outright
+# (PEP 668, "externally-managed-environment").
+set -euo pipefail
+
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$here"
+
+venv="$here/.venv"
+python_min="3.10"
+
+say() { printf '\033[36m%s\033[0m\n' "$*"; }
+warn() { printf '\033[33m%s\033[0m\n' "$*"; }
+die() { printf '\033[31m%s\033[0m\n' "$*" >&2; exit 1; }
+
+# ---------------------------------------------------------------- interpreter
+
+find_python() {
+  for candidate in python3.13 python3.12 python3.11 python3.10 python3; do
+    command -v "$candidate" >/dev/null 2>&1 || continue
+    "$candidate" - <<'PY' >/dev/null 2>&1 || continue
+import sys
+raise SystemExit(0 if sys.version_info >= (3, 10) else 1)
+PY
+    echo "$candidate"
+    return 0
+  done
+  return 1
+}
+
+if [ ! -x "$venv/bin/python" ]; then
+  python="$(find_python)" || die \
+"Need Python $python_min or newer and could not find it.
+
+On macOS the quickest fix is:
+    brew install python@3.12
+or download an installer from https://www.python.org/downloads/macos/"
+
+  say "Creating a virtual environment in .venv (using $($python -V 2>&1))"
+  "$python" -m venv "$venv" || die \
+"Could not create a virtual environment.
+If you are on macOS with the Xcode command line tools only, install a real
+Python: brew install python@3.12"
+fi
+
+py="$venv/bin/python"
+
+# ---------------------------------------------------------------- dependencies
+
+if ! "$py" -c "import flysim, numpy, pyarrow" >/dev/null 2>&1; then
+  say "Installing dependencies (numpy, pyarrow) — a minute or so, once"
+  "$py" -m pip install --upgrade pip --quiet
+  "$py" -m pip install -e "$here" --quiet || die \
+"Install failed. If pip could not find a wheel for numpy or pyarrow, your Python
+is probably very new; try Python 3.12."
+fi
+
+# ---------------------------------------------------------------- data
+
+data_home="${FLYSIM_HOME:-$HOME/.flysim}"
+data_file="$data_home/flysim_data.npz"
+
+if [ "${1:-}" = "rebuild" ]; then
+  say "Rebuilding the connectome data file"
+  "$py" -m flysim.cli setup --force
+  shift
+elif [ ! -f "$data_file" ]; then
+  warn "First run: downloading the MaleCNS connectome."
+  warn "  ~545 MB of public CC-BY data, once. The built file is ~160 MB."
+  warn "  This takes a few minutes on a decent connection."
+  echo
+  "$py" -m flysim.cli setup
+fi
+
+# ---------------------------------------------------------------- go
+
+if [ "${1:-}" = "probe" ]; then
+  shift
+  exec "$py" -m flysim.cli probe "$@"
+fi
+
+say "Starting — your browser will open at http://127.0.0.1:8799"
+say "Press the Run button in the UI, then click the arena to place things."
+exec "$py" -m flysim.cli run "$@"

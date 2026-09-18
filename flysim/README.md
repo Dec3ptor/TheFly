@@ -8,14 +8,35 @@ This is the step past the web viewer in the repository root. The browser version
 rate model over 11,752 *cell types* because that is what fits in a tab. Running natively
 lifts the limit: every neuron, every one of the 25.5M measured synapses, spiking.
 
+## Running it
+
+One command, from the repository root:
+
 ```sh
-pip install -e .        # numpy + pyarrow, nothing else
-flysim setup            # downloads ~545 MB once, builds a 160 MB data file
-flysim run              # opens the UI at http://127.0.0.1:8799
+./fly
 ```
 
-`flysim probe --ticks 200` runs it headless and prints telemetry, if you'd rather not
-open a browser. Data lands in `~/.flysim` (override with `FLYSIM_HOME`).
+That is the whole thing. It makes a virtual environment in `.venv`, installs numpy and
+pyarrow into it, downloads the connectome on first run, builds the data file, and opens
+the UI. Later runs skip straight to launching. On macOS you can also just **double-click
+`Fly.command`** in Finder.
+
+The virtual environment matters: on macOS a plain `pip install` into the Homebrew or
+system Python is refused outright with `externally-managed-environment` (PEP 668), so
+`./fly` keeps everything local and never touches your system Python.
+
+| | |
+| --- | --- |
+| `./fly` | set up if needed, then run |
+| `./fly probe --ticks 200` | run headless and print telemetry, no browser |
+| `./fly rebuild` | force a rebuild of the data file |
+
+First run downloads ~545 MB of public CC-BY data and builds a ~160 MB file into
+`~/.flysim` (override with `FLYSIM_HOME`). It needs Python 3.10+; if you don't have one
+`./fly` says so and tells you how to get it.
+
+If you'd rather drive it yourself, `pip install -e .` gives you a `flysim` command with
+the same `setup` / `run` / `probe` subcommands.
 
 ## The three layers
 

@@ -88,9 +88,14 @@ The browser version is a rate model over cell types, because that is what fits i
 integrate-and-fire neurons over all 25.5M measured synapses**, at 1-2x real time, driving
 a body around an arena — with mushroom-body plasticity so it can be conditioned.
 
+One command from the repository root — or double-click `Fly.command` on macOS:
+
 ```sh
-pip install -e .   &&   flysim setup   &&   flysim run
+./fly
 ```
+
+It builds its own virtual environment, installs numpy and pyarrow, downloads the
+connectome on first run, and opens the UI. Later runs launch straight away.
 
 See [`flysim/README.md`](flysim/README.md), which includes a frank account of where the
 model is weak.
